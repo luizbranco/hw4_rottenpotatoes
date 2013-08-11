@@ -4,6 +4,10 @@ describe Movie do
 
   let(:movie) { Movie.create!(title: 'Dogma', director: 'Kevin Smith') }
 
+  describe '.all_ratings' do
+    it { Movie.all_ratings.should eq ['G', 'PG', 'PG-13', 'NC-17', 'R'] }
+  end
+
   describe '#find_by_director' do
 
     it "returns nil if movie has no director" do
