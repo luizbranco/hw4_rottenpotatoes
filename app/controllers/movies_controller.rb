@@ -1,4 +1,7 @@
+require_relative '../../lib/filter_by.rb'
+require_relative '../../lib/filter_cache.rb'
 class MoviesController < ApplicationController
+  before_filter :restful_redirect, only: :index
 
   def show
     id = params[:id] # retrieve movie ID from URI route
@@ -7,33 +10,10 @@ class MoviesController < ApplicationController
   end
 
   def index
-    sort = params[:sort] || session[:sort]
-    case sort
-    when 'title'
-      ordering,@title_header = {:order => :title}, 'hilite'
-    when 'release_date'
-      ordering,@date_header = {:order => :release_date}, 'hilite'
-    end
+    @sort_column = Movie.column_names.include?(cache.load(:sort)) ? cache.load(:sort) : "id"
+    @filter = FilterBy.new(Movie)
+    @movies = @filter.rating(cache.load(:ratings)).order(@sort_column)
     @all_ratings = Movie.all_ratings
-    @selected_ratings = params[:ratings] || session[:ratings] || {}
-
-    if @selected_ratings == {}
-      @selected_ratings = Hash[@all_ratings.map {|rating| [rating, rating]}]
-    end
-
-    if params[:sort] != session[:sort]
-      session[:sort] = sort
-      flash.keep
-      redirect_to :sort => sort, :ratings => @selected_ratings and return
-    end
-
-    if params[:ratings] != session[:ratings] and @selected_ratings != {}
-      session[:sort] = sort
-      session[:ratings] = @selected_ratings
-      flash.keep
-      redirect_to :sort => sort, :ratings => @selected_ratings and return
-    end
-    @movies = Movie.find_all_by_rating(@selected_ratings.keys, ordering)
   end
 
   def new
@@ -71,6 +51,24 @@ class MoviesController < ApplicationController
       flash[:notice] = "'#{@movie.title}' has no director info"
       redirect_to root_path and return
     end
+  end
+
+  private
+
+  def cache
+    cache = FilterCache.new(session)
+    cache.save(params)
+    cache
+  end
+
+  def restful_redirect
+    s, p = session, params
+    if s[:sort] && !p[:sort]
+      redirect_to movies_path(sort: s[:sort], ratings: (p[:ratings] || s[:ratings]))
+    elsif s[:ratings] && !p[:ratings]
+      redirect_to movies_path(sort: (p[:sort] || s[:sort]), ratings: s[:ratings])
+    end
+    return
   end
 
 end

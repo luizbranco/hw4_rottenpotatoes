@@ -2,10 +2,10 @@ require 'spec_helper'
 
 describe MoviesController do
 
-  let(:movie) { stub(id: 1, title: 'Dogma') }
+  let(:movie) { double(id: 1, title: 'Dogma') }
   before do
     Movie.stub(:find).and_return(movie)
-    Movie.stub(all_ratings: ['PG'])
+    Movie.stub(all_ratings: ['PG'], order: [])
   end
 
   describe '#index' do
@@ -13,11 +13,6 @@ describe MoviesController do
     context 'when there is no sorting and ratings' do
       before { get :index }
       it { should render_template 'index' }
-    end
-
-    context 'when there is sorting title' do
-      before { get :index, sort: :title }
-      it { should redirect_to root_path('ratings[PG]' => 'PG', sort: 'title') }
     end
 
     context 'when there is sorting by release_date' do
