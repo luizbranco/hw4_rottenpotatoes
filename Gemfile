@@ -13,6 +13,9 @@ group :development, :test do
   gem 'launchy'
   gem 'rspec-rails'
   gem 'simplecov'
+  gem 'guard'
+  gem 'guard-rspec'
+  gem 'guard-cucumber'
 end
 
 group :test do
